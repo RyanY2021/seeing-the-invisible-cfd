@@ -1,0 +1,13 @@
+.venv/
+cache/
+renders/
+output/
+audio/*.wav
+audio/*.flac
+*.blend1
+*.vdb
+*.npy
+*.npz
+__pycache__/
+assets/**/*.exr
+assets/**/*.tif
