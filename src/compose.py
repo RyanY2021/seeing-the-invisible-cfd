@@ -222,6 +222,18 @@ def build_frame(sources, t, draft, grain_rng):
     draw_captions(img, t)
     draw_title(img, t, *TL.TITLE, "SEEING THE INVISIBLE", "an introduction to Computational Fluid Dynamics")
     draw_title(img, t, *TL.END_TITLE, "COMPUTATIONAL FLUID DYNAMICS", "seeing the invisible — before it is built", y=H * 0.5, x=W / 2, size=60, align="c")
+    # end credit (small, under the end title)
+    c0, c1 = TL.END_TITLE[0] + 1.6, TL.END_TITLE[1]
+    if c0 <= t <= c1:
+        ca = caption_alpha(t, c0, c1, 0.8)
+        lines = [("THE SMOKE, VORTICES AND CLOUDS IN THIS FILM WERE SIMULATED", 17, FONT_LABEL, 0.32, (0.80, 0.82, 0.86)),
+                 ("lattice-Boltzmann and vortex-method solvers written for this film  ·  real NOAA GFS winds of 12 Oct 2026",
+                  20, FONT_CAPTION_IT, 0.0, (0.66, 0.68, 0.72)),
+                 ("Earth imagery NASA  ·  skies Poly Haven (CC0)  ·  original music generated in code",
+                  20, FONT_CAPTION_IT, 0.0, (0.66, 0.68, 0.72))]
+        for i, (txt, sz, fnt, trk, col) in enumerate(lines):
+            lay = T(("cred", txt), txt, sz, fnt, tracking=trk, color=col)
+            paste(img, lay, W / 2, H * 0.80 + i * 32, opacity=ca, anchor="cm")
     # film grain (luma), stronger in shadows
     if not draft:
         g = grain_rng.standard_normal((H // 2, W // 2)).astype(np.float32)

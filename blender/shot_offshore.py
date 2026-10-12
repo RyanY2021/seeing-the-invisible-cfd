@@ -19,7 +19,7 @@ FIRST = int(A[1]) if len(A) > 1 else 1
 LAST = int(A[2]) if len(A) > 2 else FIRST
 PCT = int(A[3]) if len(A) > 3 else 100
 SAMPLES = int(A[4]) if len(A) > 4 else 48
-WAKE_D = float(A[5]) if len(A) > 5 else 0.10
+WAKE_D = float(A[5]) if len(A) > 5 else 0.0  # 0 = no visible wake (looked unconvincing)
 NFR = 190
 R = 80.0
 HUB_Z = 112.0
@@ -34,6 +34,11 @@ scn.render.resolution_percentage = PCT
 if hasattr(scn.cycles, "volume_step_rate"):
     scn.cycles.volume_step_rate = 2.0
 scn.frame_start, scn.frame_end = 1, NFR
+try:
+    scn.view_settings.look = "AgX - High Contrast"
+    scn.view_settings.exposure = -0.45
+except Exception:
+    pass
 
 # ---------------------------------------------------------------- sky
 w = bpy.data.worlds.new("World")
@@ -87,7 +92,8 @@ def water_material(with_foam=True):
     return m
 
 
-bpy.ops.mesh.primitive_plane_add(size=2, location=(0, 450, 0))
+# the ocean modifier generates [origin - size/2, origin - size/2 + size*repeat]: cover x -1000..1000, y -550..1450
+bpy.ops.mesh.primitive_plane_add(size=2, location=(-875, -425, 0))
 ocean = bpy.context.active_object
 ocean.name = "Ocean"
 om = ocean.modifiers.new("Ocean", "OCEAN")
@@ -194,10 +200,7 @@ def make_turbine(name, x, y, phase=0.0, detailed=True):
              cyl(5.8, 5.8, 26, 26.6, grey, verts=48 if detailed else 16),
              cyl(3.3, 2.25, 26.6, HUB_Z - 3.5, paint, verts=64 if detailed else 24)]
     for o in parts:
-        o.location.x += x
-        o.location.y += y
-        o.parent = root
-        o.matrix_parent_inverse = root.matrix_world.inverted()
+        o.parent = root  # local coords: (0, 0, z) relative to the turbine root
     # nacelle frame: local +X = downstream (wind) direction
     nac = bpy.data.objects.new(name + "_nacelle", None)
     sc.link(nac)
@@ -207,7 +210,7 @@ def make_turbine(name, x, y, phase=0.0, detailed=True):
     box = bpy.context.active_object
     box.scale = (17, 5.6, 6.0)
     box.location = (x, y, HUB_Z)
-    bpy.ops.object.transform_apply(scale=True)
+    bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
     bev = box.modifiers.new("bev", "BEVEL")
     bev.width = 1.2
     bev.segments = 4
@@ -289,7 +292,8 @@ vol.frame_start = 1
 vol.frame_offset = -1
 vol.sequence_mode = "CLIP"
 wake = bpy.data.objects.new("Wake", vol)
-sc.link(wake)
+if WAKE_D > 0:
+    sc.link(wake)
 VOX = 1.2
 # VDB index (s, y, z) * VOX + (0, -125, -125) in rotor frame; rotor plane sits 5.5 m upwind of the tower axis
 rot = Matrix.Rotation(YAW, 4, "Z")
@@ -305,7 +309,7 @@ mu.inputs[1].default_value = WAKE_D
 ntw.links.new(at.outputs["Fac"], mu.inputs[0])
 pv = ntw.nodes.new("ShaderNodeVolumePrincipled")
 pv.inputs["Color"].default_value = (0.95, 0.95, 0.97, 1)
-pv.inputs["Anisotropy"].default_value = 0.65
+pv.inputs["Anisotropy"].default_value = 0.75
 ntw.links.new(mu.outputs[0], pv.inputs["Density"])
 ntw.links.new(pv.outputs[0], out.inputs["Volume"])
 wake.data.materials.append(m)

@@ -198,7 +198,7 @@ def main():
     drone = (np.sin(2 * np.pi * mtof(38) * tt) + 0.5 * np.sin(2 * np.pi * mtof(45) * tt + 1.0)
              + 0.25 * np.sin(2 * np.pi * mtof(50) * tt * 1.0007))
     drone *= np.clip(tt / 4.0, 0, 1) * np.clip((t_of(6) + 3 - tt) / 3.0, 0, 1) * (0.85 + 0.15 * np.sin(2 * np.pi * 0.07 * tt))
-    low.add(0.0, drone * 0.10)
+    low.add(0.0, drone * 0.065)
     for m in (62, 65, 69, 76):
         pad.add(0.8, pad_note(m, t_of(6) - 0.8, bright=0.15, attack=4.0, release=3.0), pan=rng.uniform(-0.5, 0.5),
                 gain=0.55)

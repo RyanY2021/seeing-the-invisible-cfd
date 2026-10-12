@@ -22,7 +22,7 @@ NFRAMES = 432  # 18 s incl. handles
 RAKE_X = 330.0
 RAKE_DY = 32.0
 SS = 2  # supersampling of the splat
-EXPO = 0.55  # density -> optical coverage
+EXPO = 0.42  # density -> optical coverage
 
 
 def steps_for_frame(f):
