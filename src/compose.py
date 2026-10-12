@@ -147,7 +147,16 @@ def draw_title(img, t, t0, t1, main, sub, y=H * 0.47, x=140, size=52, align="l")
     if not (t0 <= t <= t1):
         return
     a = caption_alpha(t, t0, t1, 0.9)
-    big = T(("title", main, size), main, size, FONT_TITLE, tracking=0.26, color=(0.97, 0.97, 0.98))
+    if ("title", main, size) not in _cache:
+        ls_ = [text_layer(line, size, FONT_TITLE, tracking=0.26, color=(0.97, 0.97, 0.98)) for line in main.split(chr(10))]
+        wmax = max(L.shape[1] for L in ls_)
+        lh = int(size * 1.25)
+        stack = np.zeros((lh * (len(ls_) - 1) + ls_[-1].shape[0], wmax, 4), np.float32)
+        for i, L in enumerate(ls_):
+            x_ = 0 if align == "l" else (wmax - L.shape[1]) // 2
+            stack[i * lh:i * lh + L.shape[0], x_:x_ + L.shape[1]] = np.maximum(stack[i * lh:i * lh + L.shape[0], x_:x_ + L.shape[1]], L)
+        _cache[("title", main, size)] = stack
+    big = _cache[("title", main, size)]
     s_ = 1.0 + 0.03 * (1 - ease((t - t0) / 3.0))
     if abs(s_ - 1) > 1e-3:
         big = cv2.resize(big, (int(big.shape[1] * s_), int(big.shape[0] * s_)), interpolation=cv2.INTER_LINEAR)
@@ -157,14 +166,15 @@ def draw_title(img, t, t0, t1, main, sub, y=H * 0.47, x=140, size=52, align="l")
         big[..., 3] = gblur(big[..., 3], blur)
     anc = "lm" if align == "l" else "cm"
     shadowed(img, big, x, y, a, anchor=anc, shadow=0.5, blur=10)
-    subl = T(("sub", sub), sub, 34, FONT_CAPTION_IT, color=(0.86, 0.88, 0.92))
+    nl = main.count(chr(10))
+    subl = T(("sub", sub, size), sub, 34 if size >= 56 else 30, FONT_CAPTION_IT, color=(0.86, 0.88, 0.92))
     a2 = caption_alpha(t, t0 + 0.9, t1, 0.9)
-    shadowed(img, subl, x + (4 if align == "l" else 0), y + 66, a2, anchor=anc)
+    shadowed(img, subl, x + (4 if align == "l" else 0), y + big.shape[0] / 2 + 34, a2, anchor=anc)
     # thin rule under the title
     if align == "l":
         wl = int(220 * ease((t - t0 - 0.5) / 1.2))
         if wl > 0:
-            yy = int(y + 36)
+            yy = int(y + big.shape[0] / 2 + 6)
             img[yy:yy + 1, x + 4:x + 4 + wl] = img[yy:yy + 1, x + 4:x + 4 + wl] * (1 - a) + a * np.array([0.8, 0.82, 0.86])
 
 
@@ -226,7 +236,7 @@ def build_frame(sources, t, draft, grain_rng):
         img = img * (1 - ease((t - (TL.SHOTS[-1][2] - 2.0)) / 2.0))
     caption_band(img, t)
     draw_captions(img, t)
-    draw_title(img, t, *TL.TITLE, "SEEING THE INVISIBLE", "an introduction to Computational Fluid Dynamics")
+    draw_title(img, t, *TL.TITLE, "SEEING THE" + chr(10) + "INVISIBLE", "an introduction to Computational Fluid Dynamics", y=H * 0.42, x=130, size=60)
     draw_title(img, t, *TL.END_TITLE, "COMPUTATIONAL FLUID DYNAMICS", "seeing the invisible — before it is built", y=H * 0.5, x=W / 2, size=60, align="c")
     # end credit (small, under the end title)
     c0, c1 = TL.END_TITLE[0] + 1.6, TL.END_TITLE[1]
@@ -275,7 +285,7 @@ def main():
     cmd += ["-c:v", "libx264", "-preset", "slow" if not args.draft else "veryfast", "-crf", "15" if not args.draft else "23",
             "-pix_fmt", "yuv420p", "-movflags", "+faststart"]
     if audio.exists():
-        cmd += ["-c:a", "aac", "-b:a", "256k", "-af", "loudnorm=I=-16:TP=-1.5:LRA=11", "-shortest"]
+        cmd += ["-c:a", "aac", "-b:a", "256k", "-af", "loudnorm=I=-16:TP=-1.5:LRA=11", "-ar", "48000", "-shortest"]
     cmd += [str(out)]
     print(" ".join(cmd))
     p = subprocess.Popen(cmd, stdin=subprocess.PIPE)
