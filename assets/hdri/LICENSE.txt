@@ -1,0 +1,3 @@
+Poly Haven HDRIs (CC0 1.0, https://polyhaven.com/license):
+- kloofendal_48d_partly_cloudy (Greg Zaal)
+- kloppenheim_06_puresky

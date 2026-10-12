@@ -81,25 +81,29 @@ def render(first=0, last=NFRAMES):
         n = cv2.resize(n, (NX // 2, NY // 2), interpolation=cv2.INTER_CUBIC)
         det += n / (1.6 ** (5 - oc))
     det = cv2.resize(det / det.std(), (NX, NY), interpolation=cv2.INTER_LINEAR)
+    det_low = gblur(det, 14)
+    det_low = det_low / (det_low.std() + 1e-6)
     yy_full = np.arange(NY, dtype=np.float32)[:, None]
     for f in range(first, last):
         c = np.load(src / f"c_{f:04d}.npy").astype(np.float32)
         # density with soft fractal edge detail (only near the interface)
         edge = 4 * c * (1 - c)
         rho = np.clip(c + 0.16 * det * edge, 0, 1) ** 1.2
-        # optical depth towards the sun (sun up-right): march by shifting a half-res copy
+        # KH clouds form in a band at the interface: fade the lower layer with depth below it
+        band = np.clip(1 - (Y0 - 170 - yy_full) / 520.0, 0, 1) ** 1.5
+        band = np.clip(band + 0.18 * det_low * band * (1 - band) * 4, 0, 1)
+        rho = rho * band * (1 + 0.08 * det_low)
+        # optical depth towards the sun (up and to the right, ~27 deg): march on a quarter-res copy
         small = cv2.resize(rho, (NX // 4, NY // 4), interpolation=cv2.INTER_AREA)
         tau = np.zeros_like(small)
-        acc = small.copy()
-        sx, sy = -1, 0  # step towards the sun in (x, y_img): sun to the right & above -> shift left/down
         cur = small
-        for k in range(1, 90):
-            cur = np.roll(cur, -1, axis=1)  # sample to the right
-            if k % 4 == 0:
-                cur = np.roll(cur, 1, axis=0)  # and slightly above (image y grows downward in roll)
+        for k in range(1, 70):
+            cur = np.roll(cur, -2, axis=1)  # two cells to the right
+            cur = np.roll(cur, -1, axis=0)  # one cell up (row index grows with y)
+            cur[-1, :] = 0
             tau += cur
         tau = cv2.resize(tau, (NX, NY), interpolation=cv2.INTER_CUBIC)
-        light = np.exp(-0.22 * tau)
+        light = np.exp(-0.30 * tau)
         # crop camera window
         x0, y0, w = camera(f)
         hgt = w * 9 / 16
@@ -124,14 +128,14 @@ def render(first=0, last=NFRAMES):
         yyp, xxp = np.mgrid[0:H, 0:W].astype(np.float32)
         sg = np.exp(-((xxp - W * 1.05) ** 2 + (yyp - H * 0.62) ** 2) / (2 * (W * 0.28) ** 2))
         sky += sg[..., None] * np.array([1.0, 0.6, 0.3], np.float32) * 0.5
-        # cloud shading: lit side warm gold, shadowed side cool violet-grey, forward-scatter silver lining
+        # cloud shading: lit crests warm gold, shadowed bases cool violet-grey, silver lining on edges
         lit = light_c[..., None]
-        sun_col = np.array([1.35, 0.82, 0.48], np.float32)
-        amb_col = np.array([0.20, 0.17, 0.24], np.float32)
-        cloud = amb_col + sun_col * lit * (0.55 + 0.45 * sg[..., None])
+        sun_col = np.array([1.55, 1.00, 0.62], np.float32)
+        amb_col = np.array([0.30, 0.28, 0.38], np.float32)
+        cloud = amb_col * (0.55 + 0.45 * (1 - hgrad)) + sun_col * lit * (0.65 + 0.35 * sg[..., None])
         edgeg = gblur(rho_c, 1.5)
         rim = np.clip(edgeg * (1 - edgeg) * 4, 0, 1) * light_c
-        cloud += (rim ** 2)[..., None] * np.array([1.2, 0.85, 0.55], np.float32) * 0.6
+        cloud += (rim ** 2)[..., None] * np.array([1.3, 0.9, 0.6], np.float32) * 0.5
         alpha = (1 - np.exp(-6.0 * rho_c))[..., None]
         rgb = sky * (1 - alpha) + cloud * alpha
         # aerial haze toward the bottom
