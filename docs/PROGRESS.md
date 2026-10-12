@@ -7,26 +7,27 @@ Open questions for the user: `docs/QUESTIONS.md`.
 GPU work runs through a **sequential queue**: `bash tools/gpu_queue.sh` (jobs = lines of `cache/gpu_queue.txt`,
 finished line numbers in `cache/gpu_queue.done`, log `cache/gpu_queue.log`). Never run >2 Cycles jobs at once
 (12 GB VRAM overflows → WDDM paging → everything crawls). Blender renders skip existing frames → safe to restart.
-S01 render runs separately: `blender/shot_incense.py -- S01 1 484 100 64`.
 
 | ID | Status | Notes |
 |----|--------|-------|
-| S01 incense+title | RENDERING | 1..484 needed (edit uses 20 s). VDBs `cache/incense_vdb/` (560, done) |
-| S03 equations | DONE (re-render 612 f queued on CPU) | `src/shot_s03_equations.py all` |
-| S04 mesh | DONE | `blender/shot_mesh.py` Eevee; quadtree cells `src/mesh_s04.py` |
-| S05 cell | DONE (+handles 253-262 queued) | `blender/shot_cell.py` Eevee |
-| S06 vortex street | DONE | |
-| S07 resolution | DONE | |
-| S08 KH clouds | DONE | 336 f |
-| S09 models | DONE (CPU) | `src/shot_s09_models.py` → 180 f |
-| S10 wing | DONE (178 f) | `blender/shot_wing.py -- S10 1 170 100 48` |
-| S11 car | RENDERING (queue line 9) | final sim v4: centre rake 14 lines, nu=1.5e-3, 7-point smoothed particle velocity (removed grid-scale wiggle), GPU 3D blur σ=0.7 | sim `blender/sim_car.py` (fixed diffusion/solid kill); scene `blender/shot_car.py` (DENS default 25) — **check test frame, then queue `-- S11 1 164 100 48`** |
-| S12 offshore | DONE (174 f) | look approved; visible helical wake disabled (`WAKE_D=0`, looked unconvincing); fixed ocean placement + nacelle transform_apply bug |
-| S13 weather | DONE (174 f) | real GFS winds → `src/shot_s13_wind.py` (done) → `blender/shot_earth.py` Eevee |
-| S14 blood | DONE (188 f) | `src/artery.py` (done) → `blender/shot_artery.py` Eevee |
-| S15 close | QUEUED (40 samples) | `shot_incense.py -- S15 1 336 100 48` (CFD-twin wipe inside Blender) |
-| music | DONE (v1) | `src/music.py` → `audio/score.wav` (161 s). Drone maybe a bit heavy. |
-| compose | WORKING | `src/compose.py [--draft] [--still T]`; timeline/captions in `src/timeline.py` (bars @72 BPM) |
+| S01 incense+title | DONE (512 f) | `blender/shot_incense.py -- S01 1 512 100 40`; VDBs `cache/incense_vdb/` (560) |
+| S03 equations | DONE (588 f) | `src/shot_s03_equations.py all` |
+| S04 mesh | DONE (340 f) | `blender/shot_mesh.py` Eevee; quadtree cells `src/mesh_s04.py` |
+| S05 cell | DONE (262 f) | `blender/shot_cell.py` Eevee |
+| S06 vortex street | DONE (432 f) | `src/shot_s06_vortex_street.py` |
+| S07 resolution | DONE (240 f) | `src/shot_s07_resolution.py` |
+| S08 KH clouds | DONE (336 f) | `src/shot_s08_kh.py` |
+| S09 models | DONE (180 f) | `src/shot_s09_models.py` |
+| S10 wing | DONE (178 f) | `blender/shot_wing.py -- S10 1 178 100 48` |
+| S11 car | DONE (172 f) | sim `blender/sim_car.py` (v4: centre rake, nu=1.5e-3, smoothed particle velocity, GPU blur); scene `blender/shot_car.py` |
+| S12 offshore | DONE (174 f) | helical wake disabled (`WAKE_D=0`) |
+| S13 weather | DONE (174 f) | real GFS winds → `src/shot_s13_wind.py` → `blender/shot_earth.py` Eevee |
+| S14 blood | DONE (188 f) | `src/artery.py` → `blender/shot_artery.py` Eevee |
+| S15 close | DONE (336 f) | `shot_incense.py -- S15 1 336 100 40` (CFD-twin wipe inside Blender) |
+| music | DONE (v1) | `src/music.py` → `audio/score.wav` (161 s). Not checked by ear. |
+| compose | DONE | `src/compose.py` → `output/Seeing_the_Invisible_CFD.mp4` (2:35, 1080p24, CRF 15, AAC 48 kHz). `--draft` / `--still T` for previews. |
+
+`tools/check_renders.py` reports a few clamped tail frames (S03 −4, S08 −9, S15 −1) inside crossfades — invisible, accepted.
 
 ## Key technical notes (learned the hard way)
 - **Warp launch order:** last launch dim varies fastest → launch as `(nz, ny, nx)` / `(ny, nx)` with `z, y, x = wp.tid()`. Wrong order was 10× slower.
@@ -52,3 +53,8 @@ S01 render runs separately: `blender/shot_incense.py -- S01 1 484 100 64`.
   final compose when all renders exist; review against storyboard; then report to user.
 - 03:00–04:05 car sim iterated 3× (fog → grainy → wiggly → clean); S01/S15 dropped to 40 samples (denoised); final compose appended as last queue job (auto-runs when S01 has 510 frames).
 - 02:20 extras: `src/make_srt.py` → output/*.en.srt / *.zh.srt (sidecar subtitles); docs/MAKING_OF.md; tools/check_renders.py (frames needed vs rendered).
+- 04:58 half-res draft QA (20 sampled times) → two-line title, 48 kHz audio fix.
+- 06:40 all renders finished; final compose written. QA of 23 sampled frames: end title crossed the bright plume →
+  added dilated dark halo (`shadowed(..., spread=)`) under end title/tagline/credits; re-composed.
+- **STATUS: first cut complete** — `output/Seeing_the_Invisible_CFD.mp4`. Waiting for the user's review
+  (see `docs/QUESTIONS.md`). Next session: apply review notes; re-run `compose.py` (~11 min) after any change.

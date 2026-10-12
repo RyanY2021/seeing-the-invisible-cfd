@@ -66,15 +66,20 @@ def T(key, *a, **k):
     return _cache[key]
 
 
-def shadowed(dst, layer, x, y, opacity, anchor="cm", shadow=0.55, blur=6):
+def shadowed(dst, layer, x, y, opacity, anchor="cm", shadow=0.55, blur=6, spread=0):
+    """Paste `layer` over a soft dark halo; `spread` (px) fattens thin strokes so text stays legible over bright smoke."""
     if opacity <= 0.003:
         return
     sh = layer.copy()
     sh[..., :3] = 0
-    pad = blur * 3
+    pad = blur * 3 + spread
     big = np.zeros((sh.shape[0] + 2 * pad, sh.shape[1] + 2 * pad, 4), np.float32)
     big[pad:-pad, pad:-pad] = sh
-    big[..., 3] = gblur(big[..., 3], blur) * 1.4
+    if spread:
+        k = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * spread + 1, 2 * spread + 1))
+        big[..., 3] = np.clip(gblur(cv2.dilate(big[..., 3], k), blur) * 1.2, 0, 1)
+    else:
+        big[..., 3] = gblur(big[..., 3], blur) * 1.4
     hh, ww = layer.shape[:2]
     ox = {"c": ww / 2, "l": 0, "r": ww}[anchor[0]]
     oy = {"m": hh / 2, "t": 0, "b": hh}[anchor[1]]
@@ -143,7 +148,7 @@ def draw_captions(img, t):
                     img[yy:yy + 2, x0 + 2:x0 + 2 + wl] = img[yy:yy + 2, x0 + 2:x0 + 2 + wl] * (1 - a) + a * np.array([1.0, 0.82, 0.55])
 
 
-def draw_title(img, t, t0, t1, main, sub, y=H * 0.47, x=140, size=52, align="l"):
+def draw_title(img, t, t0, t1, main, sub, y=H * 0.47, x=140, size=52, align="l", halo=0):
     if not (t0 <= t <= t1):
         return
     a = caption_alpha(t, t0, t1, 0.9)
@@ -165,11 +170,12 @@ def draw_title(img, t, t0, t1, main, sub, y=H * 0.47, x=140, size=52, align="l")
         big = big.copy()
         big[..., 3] = gblur(big[..., 3], blur)
     anc = "lm" if align == "l" else "cm"
-    shadowed(img, big, x, y, a, anchor=anc, shadow=0.5, blur=10)
+    shadowed(img, big, x, y, a, anchor=anc, shadow=0.5 + 0.35 * bool(halo), blur=10, spread=halo)
     nl = main.count(chr(10))
     subl = T(("sub", sub, size), sub, 34 if size >= 56 else 30, FONT_CAPTION_IT, color=(0.86, 0.88, 0.92))
     a2 = caption_alpha(t, t0 + 0.9, t1, 0.9)
-    shadowed(img, subl, x + (4 if align == "l" else 0), y + big.shape[0] / 2 + 34, a2, anchor=anc)
+    shadowed(img, subl, x + (4 if align == "l" else 0), y + big.shape[0] / 2 + 34, a2, anchor=anc,
+             shadow=0.55 + 0.3 * bool(halo), blur=6 + 2 * bool(halo), spread=halo // 2)
     # thin rule under the title
     if align == "l":
         wl = int(220 * ease((t - t0 - 0.5) / 1.2))
@@ -237,7 +243,7 @@ def build_frame(sources, t, draft, grain_rng):
     caption_band(img, t)
     draw_captions(img, t)
     draw_title(img, t, *TL.TITLE, "SEEING THE" + chr(10) + "INVISIBLE", "an introduction to Computational Fluid Dynamics", y=H * 0.42, x=130, size=60)
-    draw_title(img, t, *TL.END_TITLE, "COMPUTATIONAL FLUID DYNAMICS", "seeing the invisible — before it is built", y=H * 0.5, x=W / 2, size=60, align="c")
+    draw_title(img, t, *TL.END_TITLE, "COMPUTATIONAL FLUID DYNAMICS", "seeing the invisible — before it is built", y=H * 0.5, x=W / 2, size=60, align="c", halo=8)
     # end credit (small, under the end title)
     c0, c1 = TL.END_TITLE[0] + 1.6, TL.END_TITLE[1]
     if c0 <= t <= c1:
@@ -249,7 +255,7 @@ def build_frame(sources, t, draft, grain_rng):
                   20, FONT_CAPTION_IT, 0.0, (0.66, 0.68, 0.72))]
         for i, (txt, sz, fnt, trk, col) in enumerate(lines):
             lay = T(("cred", txt), txt, sz, fnt, tracking=trk, color=col)
-            paste(img, lay, W / 2, H * 0.80 + i * 32, opacity=ca, anchor="cm")
+            shadowed(img, lay, W / 2, H * 0.80 + i * 32, ca, anchor="cm", shadow=0.7, blur=5, spread=3)
     # film grain (luma), stronger in shadows
     if not draft:
         g = grain_rng.standard_normal((H // 2, W // 2)).astype(np.float32)
