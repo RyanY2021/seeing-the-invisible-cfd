@@ -29,25 +29,26 @@ SHOTS = [
 ]
 END = b(46.2) + 1.0  # short black tail
 
-# on-screen captions (edit time in, out, text, style)
+# on-screen captions: (edit time in, out, text, style, small label above or None)
 CAPTIONS = [
-    (2.0, 5.6, "A ribbon of smoke.", "cap"),
-    (6.2, 9.4, "Smooth at first…", "cap"),
-    (9.8, 13.0, "…then, suddenly, chaos.", "cap"),
-    (b(13) + 0.6, b(13) + 4.6, "So we let a computer solve them — piece by piece.", "cap"),
-    (b(13) + 5.2, b(17) - 0.4, "①  Divide space into millions of tiny cells.", "step"),
-    (b(17) + 0.4, b(20) - 0.3, "②  In every cell, keep the balance.", "step"),
-    (b(20) + 0.4, b(22) + 1.0, "③  Step forward in time — thousands of times.", "step"),
-    (b(22) + 1.6, b(24) - 0.3, "From simple local rules, the whole flow emerges.", "cap"),
-    (b(24) + 0.3, b(26) - 0.3, "Finer cells reveal more — at a higher cost.", "cap"),
-    (b(26) + 0.6, b(28) - 0.2, "The hardest part: turbulence.", "cap"),
-    (b(28) + 0.3, b(30) - 0.3, "Swirls within swirls — from kilometres down to millimetres.", "cap"),
-    (b(30) + 0.3, b(32) - 0.3, "Too many to compute them all — so the smallest are modelled.", "cap"),
-    (b(32) + 0.6, b(34) - 0.3, "Wings that lift us", "app"),
-    (b(34) + 0.5, b(36) - 0.3, "Cars that slip through the air", "app"),
-    (b(36) + 0.5, b(38) - 0.3, "Turbines standing in the sea", "app"),
-    (b(38) + 0.5, b(40) - 0.3, "Tomorrow’s weather", "app"),
-    (b(40) + 0.5, b(42) - 0.3, "The blood in our veins", "app"),
+    (2.0, 5.6, "A ribbon of smoke.", "capL", None),
+    (6.2, 9.4, "Smooth at first…", "capL", None),
+    (9.8, 13.0, "…then, suddenly, chaos.", "capL", None),
+    (b(13) + 0.5, b(13) + 4.4, "So we let a computer solve them — piece by piece.", "cap", None),
+    (b(13) + 5.0, b(17) - 0.4, "Divide space into millions of tiny cells.", "cap", "STEP 1"),
+    (b(17) + 0.4, b(20) - 0.3, "In every cell, keep the balance:", "cap", "STEP 2"),
+    (b(17) + 1.6, b(20) - 0.3, "EQ_BALANCE", "eq", None),
+    (b(20) + 0.4, b(22) + 1.2, "March forward in time — thousands of steps.", "cap", "STEP 3"),
+    (b(22) + 1.8, b(24) - 0.3, "From simple local rules, the whole flow emerges.", "cap", None),
+    (b(24) + 0.3, b(26) - 0.3, "Finer cells reveal more — at a higher cost.", "cap", None),
+    (b(26) + 0.6, b(28) - 0.2, "The hardest part: turbulence.", "cap", None),
+    (b(28) + 0.3, b(30) - 0.3, "Swirls within swirls — from kilometres down to millimetres.", "cap", None),
+    (b(30) + 0.3, b(32) - 0.3, "Too many to compute them all — so the smallest are modelled.", "cap", None),
+    (b(32) + 0.6, b(34) - 0.3, "Wings that lift us", "app", "AEROSPACE"),
+    (b(34) + 0.5, b(36) - 0.3, "Cars that slip through the air", "app", "AUTOMOTIVE"),
+    (b(36) + 0.5, b(38) - 0.3, "Turbines standing in the sea", "app", "OFFSHORE ENERGY"),
+    (b(38) + 0.5, b(40) - 0.3, "Tomorrow’s weather", "app", "WEATHER · REAL WINDS, 12 OCT 2026"),
+    (b(40) + 0.5, b(42) - 0.3, "The blood in our veins", "app", "MEDICINE"),
 ]
 TITLE = (b(4) + 0.2, b(6) - 0.3)        # main title over the smoke
 END_TITLE = (b(44) + 0.3, b(46.2) - 0.2)

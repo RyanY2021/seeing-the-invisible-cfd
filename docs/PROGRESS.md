@@ -4,24 +4,29 @@ Newest entries at the top. Each shot: TODO → SIM → RENDERING → DONE (frame
 Open questions for the user: `docs/QUESTIONS.md`.
 
 ## Shot status
+GPU work runs through a **sequential queue**: `bash tools/gpu_queue.sh` (jobs = lines of `cache/gpu_queue.txt`,
+finished line numbers in `cache/gpu_queue.done`, log `cache/gpu_queue.log`). Never run >2 Cycles jobs at once
+(12 GB VRAM overflows → WDDM paging → everything crawls). Blender renders skip existing frames → safe to restart.
+S01 render runs separately: `blender/shot_incense.py -- S01 1 484 100 64`.
+
 | ID | Status | Notes |
 |----|--------|-------|
-| S01/S02 incense+title | RENDERING | sim: `blender/sim_incense.py` (runs *inside Blender*, writes `cache/incense_vdb/incense_0000..0559.vdb`). Render: `blender/shot_incense.py -- S01 1 552 100 64` → `renders/S01/0001..0552.png` (~20–30 s/frame). Look-dev params baked as defaults (DENS 170, FALL 1.6, LIGHT 1.35). `render_frames` skips existing frames → safe to re-launch to resume. |
-| S03 equations | DONE | `src/shot_s03_equations.py bg|render` → `renders/S03/0000..0551.png` (text baked in; 12-frame head handle) |
-| S04 mesh | TODO | Blender (Eevee ok); needs SDF car |
-| S05 cell | TODO | Blender (Eevee ok) |
-| S06 vortex street | DONE | `src/shot_s06_vortex_street.py sim|render` → `renders/S06/0000..0431.png` (432 f). Possible polish: EXPO 0.55→0.45 if too contrasty. Steps per frame in `cache/s06/meta.npz` (for the time-step counter overlay). |
-| S07 resolution | DONE | `src/shot_s07_resolution.py` → `renders/S07/0000..0239.png`; labels include real compute times (0.8 s / 2.7 s / 3 min 25 s) |
-| S08 Kelvin–Helmholtz | RENDERING | sim done (`cache/s08/c_####.npy`, 3840×2160 f16). Render in 3 CPU procs → `renders/S08/0000..0335.png` |
-| S09 models | TODO | derive from S08 dye fields (time-avg = RANS, blur = LES, raw = DNS) |
-| S10 wing | RENDERING | `src/sim_wing.py` (vortex-blob roll-up, 3M markers → `cache/wing_tex/####.png`), `src/plane_sdf.py` (aircraft mesh), `blender/shot_wing.py -- S10 1 196 100 64` → `renders/S10/` |
-| S11 car | SIM PENDING | car: `src/car_sdf.py mesh` (done), mask `src/sim_car_mask.py` (done). Sim: `blender/sim_car.py -- 200 8000` (inside Blender; writes `cache/car_vdb`). Scene: `blender/shot_car.py` (untested until VDBs exist) |
-| S12 offshore | TODO | plan: Blender ocean + monopile turbine (+ fog wakes / tip vortices) |
-| S13 weather | TODO | plan: globe + wind streaks (real GFS via NCSS if reachable) |
-| S14 blood | TODO | plan: artery bifurcation + RBC instancing via frame handler |
-| S15 close | TODO | reuse incense VDBs 300..559 (`shot_incense.py -- S15` / `S15cfd`), wipe in compositor |
-| music | TODO | `src/music.py` |
-| compose/edit | TODO | `src/compose.py` |
+| S01 incense+title | RENDERING | 1..484 needed (edit uses 20 s). VDBs `cache/incense_vdb/` (560, done) |
+| S03 equations | DONE (re-render 612 f queued on CPU) | `src/shot_s03_equations.py all` |
+| S04 mesh | RENDERING (queue) | `blender/shot_mesh.py` Eevee; quadtree cells `src/mesh_s04.py` |
+| S05 cell | QUEUED | `blender/shot_cell.py` Eevee |
+| S06 vortex street | DONE | |
+| S07 resolution | DONE | |
+| S08 KH clouds | DONE | 336 f |
+| S09 models | DONE (CPU) | `src/shot_s09_models.py` → 180 f |
+| S10 wing | QUEUED (12 f rendered) | `blender/shot_wing.py -- S10 1 170 100 48` |
+| S11 car | SIM QUEUED → then test → final | sim `blender/sim_car.py` (fixed diffusion/solid kill); scene `blender/shot_car.py` (DENS default 25) — **check test frame, then queue `-- S11 1 164 100 48`** |
+| S12 offshore | TEST QUEUED | wake VDBs done (`cache/wake_vdb`, 190). **Check `cache/lookdev/offshore_*.png`, then queue `-- S12 1 164 100 48`** |
+| S13 weather | QUEUED | real GFS winds → `src/shot_s13_wind.py` (done) → `blender/shot_earth.py` Eevee |
+| S14 blood | QUEUED | `src/artery.py` (done) → `blender/shot_artery.py` Eevee |
+| S15 close | QUEUED | `shot_incense.py -- S15 1 336 100 48` (CFD-twin wipe inside Blender) |
+| music | DONE (v1) | `src/music.py` → `audio/score.wav` (161 s). Drone maybe a bit heavy. |
+| compose | WORKING | `src/compose.py [--draft] [--still T]`; timeline/captions in `src/timeline.py` (bars @72 BPM) |
 
 ## Key technical notes (learned the hard way)
 - **Warp launch order:** last launch dim varies fastest → launch as `(nz, ny, nx)` / `(ny, nx)` with `z, y, x = wp.tid()`. Wrong order was 10× slower.
@@ -40,4 +45,8 @@ Open questions for the user: `docs/QUESTIONS.md`.
 - 01:00 S07 sims + render; incense look-dev (scale 0.5 mm/voxel, height-dilution of density, bokeh background).
 - 01:08 S01 final render started.
 - 01:10–01:27 S03 rendered; SDF car built (glass via vertex colours, alloy rims); wing shot: red smoke curtain + Krasny roll-up looks great; KH cloud shading fixed.
-- NEXT: run car sim once incense sim finishes; S12 offshore, S13 earth, S14 artery, S04 mesh, S05 cell, S09, music, compose.
+- 01:30–02:10 wing (red smoke + Krasny roll-up) done; offshore scene + helical wake VDBs; GFS winds + Earth (Eevee);
+  carotid artery (Eevee); cell shot; S15 CFD-twin wipe; KH→S09 RANS/LES/DNS; procedural score; compositor with captions.
+- GPU overload incident 01:40 (3 Cycles + sim) → introduced the sequential GPU queue.
+- NEXT: check car + offshore tests when the queue reaches them, queue their finals; draft cut (`compose.py --draft`);
+  final compose when all renders exist; review against storyboard; then report to user.

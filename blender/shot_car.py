@@ -20,7 +20,7 @@ LAST = int(A[2]) if len(A) > 2 else FIRST
 PCT = int(A[3]) if len(A) > 3 else 100
 SAMPLES = int(A[4]) if len(A) > 4 else 64
 VDB_FORCE = int(A[5]) if len(A) > 5 else -1
-DENS = float(A[6]) if len(A) > 6 else 60.0
+DENS = float(A[6]) if len(A) > 6 else 25.0
 NFR = 200
 
 scn = sc.reset_scene()
