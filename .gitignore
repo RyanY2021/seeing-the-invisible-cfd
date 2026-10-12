@@ -11,3 +11,4 @@ audio/*.flac
 __pycache__/
 assets/**/*.exr
 assets/**/*.tif
+audio/stems/

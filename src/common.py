@@ -15,7 +15,7 @@ AUDIO = ROOT / "audio"
 OUTPUT = ROOT / "output"
 ASSETS = ROOT / "assets"
 BLENDER_DIR = ROOT / "blender"
-BLENDER_EXE = Path(r"D:\Tools\Blender\blender.exe")
+BLENDER_EXE = Path(os.environ.get("BLENDER_EXE", r"D:\Tools\Blender\blender.exe"))
 FONTS = Path(r"C:\Windows\Fonts")
 
 W, H, FPS = 1920, 1080, 24

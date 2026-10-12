@@ -58,3 +58,6 @@ finished line numbers in `cache/gpu_queue.done`, log `cache/gpu_queue.log`). Nev
   added dilated dark halo (`shadowed(..., spread=)`) under end title/tagline/credits; re-composed.
 - **STATUS: first cut complete** — `output/Seeing_the_Invisible_CFD.mp4`. Waiting for the user's review
   (see `docs/QUESTIONS.md`). Next session: apply review notes; re-run `compose.py` (~11 min) after any change.
+- 07:00 user asked to publish on GitHub (public, account RyanY2021). Made a cleaned `main` branch (music stems dropped,
+  author email → qirui.you.2021@gmail.com, personal notes redacted); `master` kept locally as the untouched original.
+  Added LICENSE (MIT code; CC BY 4.0 media in README), README.md with stills, requirements.txt, BLENDER_EXE env override.

@@ -1,0 +1,10 @@
+# Python 3.13 (project venv). Blender 5.2 is used separately for the 3D shots (see README).
+warp-lang==1.18.0
+numpy==2.5.4
+scipy==1.18.1
+scikit-image==0.26.0
+opencv-python==5.0.0.93
+pillow==12.3.0
+matplotlib==3.11.2
+imageio==2.38.1
+imageio-ffmpeg==0.6.0

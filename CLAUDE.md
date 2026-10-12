@@ -52,4 +52,11 @@ assets/              downloaded third-party assets (with LICENSE notes)
 output/              final video(s)
 tools/               small probes/utilities
 ```
-Large/regenerable data (`.venv`, `cache`, `renders`, `output`, `audio/*.wav`) is git-ignored; scripts and docs are committed to the local git repo.
+Large/regenerable data (`.venv`, `cache`, `renders`, `output`, `audio/*.wav`, `audio/stems/`) is git-ignored; scripts and docs are committed.
+
+## Git / GitHub
+- **Public** repo: https://github.com/RyanY2021/seeing-the-invisible-cfd, branch `main` (code MIT, media CC BY 4.0; see README).
+  Commit identity comes from the global git config (EdtRhyn <qirui.you.2021@gmail.com>). Pushing uses the stored Git Credential Manager login.
+- Local branch `master` = original pre-publication history (contains the music stems and an old email) — **never push it**;
+  the user may delete it once they're happy with `main`.
+- Public repo → keep personal details about the user out of committed files.
