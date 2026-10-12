@@ -21,7 +21,7 @@ S01 render runs separately: `blender/shot_incense.py -- S01 1 484 100 64`.
 | S09 models | DONE (CPU) | `src/shot_s09_models.py` → 180 f |
 | S10 wing | QUEUED (12 f rendered) | `blender/shot_wing.py -- S10 1 170 100 48` |
 | S11 car | SIM QUEUED → then test → final | sim `blender/sim_car.py` (fixed diffusion/solid kill); scene `blender/shot_car.py` (DENS default 25) — **check test frame, then queue `-- S11 1 164 100 48`** |
-| S12 offshore | TEST QUEUED | wake VDBs done (`cache/wake_vdb`, 190). **Check `cache/lookdev/offshore_*.png`, then queue `-- S12 1 164 100 48`** |
+| S12 offshore | QUEUED (final) | look approved; visible helical wake disabled (`WAKE_D=0`, looked unconvincing); fixed ocean placement + nacelle transform_apply bug |
 | S13 weather | QUEUED | real GFS winds → `src/shot_s13_wind.py` (done) → `blender/shot_earth.py` Eevee |
 | S14 blood | QUEUED | `src/artery.py` (done) → `blender/shot_artery.py` Eevee |
 | S15 close | QUEUED | `shot_incense.py -- S15 1 336 100 48` (CFD-twin wipe inside Blender) |
@@ -50,3 +50,4 @@ S01 render runs separately: `blender/shot_incense.py -- S01 1 484 100 64`.
 - GPU overload incident 01:40 (3 Cycles + sim) → introduced the sequential GPU queue.
 - NEXT: check car + offshore tests when the queue reaches them, queue their finals; draft cut (`compose.py --draft`);
   final compose when all renders exist; review against storyboard; then report to user.
+- 02:20 extras: `src/make_srt.py` → output/*.en.srt / *.zh.srt (sidecar subtitles); docs/MAKING_OF.md; tools/check_renders.py (frames needed vs rendered).
