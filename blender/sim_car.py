@@ -70,15 +70,15 @@ print(f"warmup {WARMUP} {time.time() - t0:.0f}s", flush=True)
 for k in range(2400):
     sim.step()
     if k % 2 == 0:
-        P.emit(rake, 6, 0.18)
-        P.advect(sim, 2.0, d0=0.0015, d1=2.5e-6, maxage=9000)
+        P.emit(rake, 6, 0.10)
+        P.advect(sim, 2.0, d0=0.0002, d1=3e-7, maxage=9000)
     step += 1
 for f in range(NFRAMES):
     for k in range(STEPS_PER_FRAME):
         sim.step()
         if k % 2 == 0:
-            P.emit(rake, 6, 0.18)
-            P.advect(sim, 2.0, d0=0.0015, d1=2.5e-6, maxage=9000)
+            P.emit(rake, 6, 0.10)
+            P.advect(sim, 2.0, d0=0.0002, d1=3e-7, maxage=9000)
         step += 1
     P.splat(grid, g_lo, R, w0=0.08, fade_age=5000)
     d = grid.numpy()  # [lat, up, x]

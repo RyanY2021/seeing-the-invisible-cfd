@@ -12,7 +12,7 @@ import numpy as np
 from common import FPS, H, W, cache_dir, save_png16, shot_dir, smoothstep
 
 DUR = 22.0
-NFRAMES = int(DUR * FPS) + 24  # + handles
+NFRAMES = int(DUR * FPS) + 60  # + handles
 BGW, BGH = 960, 540
 
 # (key, latex, label shown when highlighted)

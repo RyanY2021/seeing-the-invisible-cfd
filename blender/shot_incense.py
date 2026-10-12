@@ -51,6 +51,10 @@ smoke.scale = (VOX, VOX, VOX)
 smoke.location = (-192 * VOX, -192 * VOX, 0.0)
 
 CFD = MODE == "S15cfd"
+WIPE = MODE in ("S15", "S15test")
+S15_N = 336
+# scan line x positions (m): all real -> sweep to CFD -> hold -> sweep back -> real
+WIPE_KEYS = [(1, -0.07), (30, -0.07), (150, 0.075), (190, 0.075), (262, -0.07), (S15_N, -0.07)]
 m, nt, out = sc.new_material("SmokeMat")
 attr = nt.nodes.new("ShaderNodeAttribute")
 attr.attribute_name = "density"
@@ -83,18 +87,21 @@ dz.operation = "MULTIPLY"
 nt.links.new(attr.outputs["Fac"], dz.inputs[0])
 nt.links.new(hc.outputs[0], dz.inputs[1])
 nt.links.new(dz.outputs[0], mul.inputs[0])
-pv = nt.nodes.new("ShaderNodeVolumePrincipled")
+pv = nt.nodes.new("ShaderNodeVolumePrincipled")  # photoreal smoke
 pv.inputs["Anisotropy"].default_value = 0.55
+pv.inputs["Color"].default_value = (0.82, 0.85, 0.9, 1)
 nt.links.new(mul.outputs[0], pv.inputs["Density"])
-if not CFD:
-    pv.inputs["Color"].default_value = (0.82, 0.85, 0.9, 1)
-else:
+final = pv
+if CFD or WIPE:
+    pc = nt.nodes.new("ShaderNodeVolumePrincipled")  # 'simulation view': coloured by vorticity
+    pc.inputs["Anisotropy"].default_value = 0.3
+    nt.links.new(mul.outputs[0], pc.inputs["Density"])
     va = nt.nodes.new("ShaderNodeAttribute")
     va.attribute_name = "vorticity"
     va.attribute_type = "GEOMETRY"
     mr = nt.nodes.new("ShaderNodeMapRange")
     mr.inputs["From Min"].default_value = 0.0
-    mr.inputs["From Max"].default_value = 0.012
+    mr.inputs["From Max"].default_value = 0.009
     nt.links.new(va.outputs["Fac"], mr.inputs["Value"])
     ramp = nt.nodes.new("ShaderNodeValToRGB")
     els = ramp.color_ramp.elements
@@ -104,14 +111,60 @@ else:
         e = els.new(pos)
         e.color = col
     nt.links.new(mr.outputs["Result"], ramp.inputs["Fac"])
-    nt.links.new(ramp.outputs["Color"], pv.inputs["Color"])
-    nt.links.new(ramp.outputs["Color"], pv.inputs["Emission Color"])
+    nt.links.new(ramp.outputs["Color"], pc.inputs["Color"])
+    nt.links.new(ramp.outputs["Color"], pc.inputs["Emission Color"])
     em = nt.nodes.new("ShaderNodeMath")
     em.operation = "MULTIPLY"
-    em.inputs[1].default_value = 6.0
-    nt.links.new(attr.outputs["Fac"], em.inputs[0])
-    nt.links.new(em.outputs[0], pv.inputs["Emission Strength"])
-nt.links.new(pv.outputs[0], out.inputs["Volume"])
+    em.inputs[1].default_value = 5.0
+    nt.links.new(dz.outputs[0], em.inputs[0])
+    nt.links.new(em.outputs[0], pc.inputs["Emission Strength"])
+    final = pc
+if WIPE:
+    # moving vertical scan plane at x = xw(frame): left = real smoke, right = CFD view; bright edge at the line
+    geo2 = nt.nodes.new("ShaderNodeNewGeometry")
+    sx = nt.nodes.new("ShaderNodeSeparateXYZ")
+    nt.links.new(geo2.outputs["Position"], sx.inputs[0])
+    xw = nt.nodes.new("ShaderNodeValue")
+    for f, v in WIPE_KEYS:
+        xw.outputs[0].default_value = v
+        xw.outputs[0].keyframe_insert("default_value", frame=f)
+    dx = nt.nodes.new("ShaderNodeMath")
+    dx.operation = "SUBTRACT"
+    nt.links.new(xw.outputs[0], dx.inputs[0])
+    nt.links.new(sx.outputs["X"], dx.inputs[1])
+    fac = nt.nodes.new("ShaderNodeMapRange")
+    fac.interpolation_type = "SMOOTHSTEP"
+    fac.inputs["From Min"].default_value = 0.0015
+    fac.inputs["From Max"].default_value = -0.0015
+    nt.links.new(dx.outputs[0], fac.inputs["Value"])
+    mixw = nt.nodes.new("ShaderNodeMixShader")
+    nt.links.new(fac.outputs["Result"], mixw.inputs["Fac"])
+    nt.links.new(pc.outputs[0], mixw.inputs[1])  # left of the scan line: CFD view
+    nt.links.new(pv.outputs[0], mixw.inputs[2])  # right of it: real smoke
+    # glowing scan edge
+    ad = nt.nodes.new("ShaderNodeMath")
+    ad.operation = "ABSOLUTE"
+    nt.links.new(dx.outputs[0], ad.inputs[0])
+    edge = nt.nodes.new("ShaderNodeMapRange")
+    edge.inputs["From Min"].default_value = 0.0012
+    edge.inputs["From Max"].default_value = 0.0
+    nt.links.new(ad.outputs[0], edge.inputs["Value"])
+    eg = nt.nodes.new("ShaderNodeMath")
+    eg.operation = "MULTIPLY"
+    nt.links.new(edge.outputs["Result"], eg.inputs[0])
+    nt.links.new(dz.outputs[0], eg.inputs[1])
+    eg2 = nt.nodes.new("ShaderNodeMath")
+    eg2.operation = "MULTIPLY"
+    eg2.inputs[1].default_value = 60.0
+    nt.links.new(eg.outputs[0], eg2.inputs[0])
+    ev = nt.nodes.new("ShaderNodeEmission")
+    ev.inputs["Color"].default_value = (0.75, 0.92, 1.0, 1)
+    nt.links.new(eg2.outputs[0], ev.inputs["Strength"])
+    addv = nt.nodes.new("ShaderNodeAddShader")
+    nt.links.new(mixw.outputs[0], addv.inputs[0])
+    nt.links.new(ev.outputs[0], addv.inputs[1])
+    final = addv
+nt.links.new(final.outputs[0], out.inputs["Volume"])
 smoke.data.materials.append(m)
 
 # ---------------------------------------------------------------- incense stick
@@ -233,13 +286,15 @@ if MODE in ("S01", "test"):
     cam_key(552, 0.72, 0.200, cx=0.016, cz_off=-0.010)
     scn.frame_start, scn.frame_end = 1, 552
 else:  # S15: wide, calm, whole plume
-    cam_key(1, 0.80, 0.175, cx=-0.02)
-    cam_key(260, 0.86, 0.19, cx=0.02)
-    scn.frame_start, scn.frame_end = 1, 260
+    cam_key(1, 1.12, 0.140, cx=-0.015, cz_off=-0.02)
+    cam_key(S15_N, 1.20, 0.148, cx=0.015, cz_off=-0.02)
+    scn.frame_start, scn.frame_end = 1, S15_N
 for o in (cam, tgt):
     sc.smooth_keys(o)
 
-if MODE == "test":
+if MODE in ("test", "S15test"):
+    if MODE == "S15test":
+        vol.frame_offset = 223
     out = sc.ROOT / "cache" / "lookdev"
     out.mkdir(parents=True, exist_ok=True)
     for f in range(FIRST, LAST + 1, max(1, (LAST - FIRST) // 2 or 1)):
@@ -249,12 +304,12 @@ if MODE == "test":
             vol.frame_offset = VDB_FORCE - 1
         scn.frame_set(f)
         print("vdb file:", vol.grids.frame_filepath if hasattr(vol.grids, "frame_filepath") else "?", flush=True)
-        scn.render.filepath = str(out / f"incense_{f:04d}.png")
+        scn.render.filepath = str(out / f"{MODE}_{f:04d}.png")
         bpy.ops.render.render(write_still=True)
     bpy.ops.wm.save_as_mainfile(filepath=str(sc.ROOT / "blender" / "incense.blend"))
 else:
     shot = {"S01": "S01", "S15": "S15", "S15cfd": "S15cfd"}[MODE]
     if MODE.startswith("S15"):
         # closing uses the later, fully developed part of the simulation
-        vol.frame_offset = 299
+        vol.frame_offset = 223  # scene frame 1 -> vdb 224; 336 frames -> up to 559
     sc.render_frames(scn, sc.ROOT / "renders" / shot, FIRST, LAST)

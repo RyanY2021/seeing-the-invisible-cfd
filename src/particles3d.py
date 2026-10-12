@@ -40,7 +40,8 @@ def k_adv3(pos: wp.array(dtype=wp.vec3), age: wp.array(dtype=float), ux: wp.arra
         age[i] = -1.0
         return
     if solid[int(q[2] + 0.5), int(q[1] + 0.5), int(q[0] + 0.5)] != wp.uint8(0):
-        q = p
+        age[i] = -1.0  # smoke touching the body is removed (no speckle build-up on surfaces)
+        return
     pos[i] = q
     age[i] = a + dt
 
