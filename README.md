@@ -2,6 +2,9 @@
 
 ![Title frame](docs/poster.jpg)
 
+**▶ Watch / download the film: [release v1.0.0](https://github.com/RyanY2021/seeing-the-invisible-cfd/releases/tag/v1.0.0)**
+(2:35, 1920×1080, 24 fps, H.264 + AAC, 436 MB, with EN / 简体中文 subtitle files)
+
 A 2 min 35 s cinematic introduction to **Computational Fluid Dynamics (CFD)** for a general audience:
 no voiceover, just on-screen captions and an original score. It shows *why* fluids are hard (Navier–Stokes,
 turbulence), the core idea of CFD (cut space into cells → keep the balance in every cell → march in time),
@@ -24,7 +27,7 @@ Blender (Cycles/Eevee) and composited by code. The music is synthesised in numpy
 
 Shot-by-shot details (and which shots are genuine simulations vs. illustrations): [docs/MAKING_OF.md](docs/MAKING_OF.md).
 
-The rendered film (≈ 436 MB, 1080p24 H.264) is not stored in git; rebuild it with the pipeline below.
+The video file is not stored in git (it is attached to the release); the pipeline below rebuilds it from source.
 
 ## Repository layout
 ```

@@ -61,3 +61,5 @@ finished line numbers in `cache/gpu_queue.done`, log `cache/gpu_queue.log`). Nev
 - 07:00 user asked to publish on GitHub (public, account RyanY2021). Made a cleaned `main` branch (music stems dropped,
   author email → qirui.you.2021@gmail.com, personal notes redacted); `master` kept locally as the untouched original.
   Added LICENSE (MIT code; CC BY 4.0 media in README), README.md with stills, requirements.txt, BLENDER_EXE env override.
+- 07:35 released **v1.0.0** on GitHub (tag `v1.0.0`): `output/Seeing_the_Invisible_CFD_v1.0.0.mp4` (same encode, remuxed with
+  version metadata + faststart), EN/ZH .srt, poster. Next version → bump tag (v1.1.0 …) and attach the new mp4 to a new release.
