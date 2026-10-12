@@ -13,18 +13,18 @@ S01 render runs separately: `blender/shot_incense.py -- S01 1 484 100 64`.
 |----|--------|-------|
 | S01 incense+title | RENDERING | 1..484 needed (edit uses 20 s). VDBs `cache/incense_vdb/` (560, done) |
 | S03 equations | DONE (re-render 612 f queued on CPU) | `src/shot_s03_equations.py all` |
-| S04 mesh | RENDERING (queue) | `blender/shot_mesh.py` Eevee; quadtree cells `src/mesh_s04.py` |
-| S05 cell | QUEUED | `blender/shot_cell.py` Eevee |
+| S04 mesh | DONE | `blender/shot_mesh.py` Eevee; quadtree cells `src/mesh_s04.py` |
+| S05 cell | DONE (+handles 253-262 queued) | `blender/shot_cell.py` Eevee |
 | S06 vortex street | DONE | |
 | S07 resolution | DONE | |
 | S08 KH clouds | DONE | 336 f |
 | S09 models | DONE (CPU) | `src/shot_s09_models.py` → 180 f |
-| S10 wing | QUEUED (12 f rendered) | `blender/shot_wing.py -- S10 1 170 100 48` |
-| S11 car | SIM QUEUED → then test → final | sim `blender/sim_car.py` (fixed diffusion/solid kill); scene `blender/shot_car.py` (DENS default 25) — **check test frame, then queue `-- S11 1 164 100 48`** |
-| S12 offshore | QUEUED (final) | look approved; visible helical wake disabled (`WAKE_D=0`, looked unconvincing); fixed ocean placement + nacelle transform_apply bug |
-| S13 weather | QUEUED | real GFS winds → `src/shot_s13_wind.py` (done) → `blender/shot_earth.py` Eevee |
-| S14 blood | QUEUED | `src/artery.py` (done) → `blender/shot_artery.py` Eevee |
-| S15 close | QUEUED | `shot_incense.py -- S15 1 336 100 48` (CFD-twin wipe inside Blender) |
+| S10 wing | DONE (178 f) | `blender/shot_wing.py -- S10 1 170 100 48` |
+| S11 car | RENDERING (queue line 9) | final sim v4: centre rake 14 lines, nu=1.5e-3, 7-point smoothed particle velocity (removed grid-scale wiggle), GPU 3D blur σ=0.7 | sim `blender/sim_car.py` (fixed diffusion/solid kill); scene `blender/shot_car.py` (DENS default 25) — **check test frame, then queue `-- S11 1 164 100 48`** |
+| S12 offshore | DONE (174 f) | look approved; visible helical wake disabled (`WAKE_D=0`, looked unconvincing); fixed ocean placement + nacelle transform_apply bug |
+| S13 weather | DONE (174 f) | real GFS winds → `src/shot_s13_wind.py` (done) → `blender/shot_earth.py` Eevee |
+| S14 blood | DONE (188 f) | `src/artery.py` (done) → `blender/shot_artery.py` Eevee |
+| S15 close | QUEUED (40 samples) | `shot_incense.py -- S15 1 336 100 48` (CFD-twin wipe inside Blender) |
 | music | DONE (v1) | `src/music.py` → `audio/score.wav` (161 s). Drone maybe a bit heavy. |
 | compose | WORKING | `src/compose.py [--draft] [--still T]`; timeline/captions in `src/timeline.py` (bars @72 BPM) |
 
@@ -50,4 +50,5 @@ S01 render runs separately: `blender/shot_incense.py -- S01 1 484 100 64`.
 - GPU overload incident 01:40 (3 Cycles + sim) → introduced the sequential GPU queue.
 - NEXT: check car + offshore tests when the queue reaches them, queue their finals; draft cut (`compose.py --draft`);
   final compose when all renders exist; review against storyboard; then report to user.
+- 03:00–04:05 car sim iterated 3× (fog → grainy → wiggly → clean); S01/S15 dropped to 40 samples (denoised); final compose appended as last queue job (auto-runs when S01 has 510 frames).
 - 02:20 extras: `src/make_srt.py` → output/*.en.srt / *.zh.srt (sidecar subtitles); docs/MAKING_OF.md; tools/check_renders.py (frames needed vs rendered).

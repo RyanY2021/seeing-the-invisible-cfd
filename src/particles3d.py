@@ -18,6 +18,32 @@ def k_emit3(pos: wp.array(dtype=wp.vec3), age: wp.array(dtype=float), src: wp.ar
     age[k] = 0.0
 
 
+@wp.func
+def vel_smooth(ux: wp.array3d(dtype=float), uy: wp.array3d(dtype=float), uz: wp.array3d(dtype=float),
+               p: wp.vec3, nx: int, ny: int, nz: int) -> wp.vec3:
+    """7-point averaged trilinear velocity (filters grid-scale noise that would make smoke lines wiggle)."""
+    acc = wp.vec3(0.0, 0.0, 0.0)
+    for k in range(7):
+        o = wp.vec3(0.0, 0.0, 0.0)
+        if k == 1:
+            o = wp.vec3(1.0, 0.0, 0.0)
+        if k == 2:
+            o = wp.vec3(-1.0, 0.0, 0.0)
+        if k == 3:
+            o = wp.vec3(0.0, 1.0, 0.0)
+        if k == 4:
+            o = wp.vec3(0.0, -1.0, 0.0)
+        if k == 5:
+            o = wp.vec3(0.0, 0.0, 1.0)
+        if k == 6:
+            o = wp.vec3(0.0, 0.0, -1.0)
+        q = p + o
+        acc = acc + wp.vec3(trilin(ux, q[0], q[1], q[2], nx, ny, nz, 0, 0, 0),
+                            trilin(uy, q[0], q[1], q[2], nx, ny, nz, 0, 0, 0),
+                            trilin(uz, q[0], q[1], q[2], nx, ny, nz, 0, 0, 0))
+    return acc / 7.0
+
+
 @wp.kernel
 def k_adv3(pos: wp.array(dtype=wp.vec3), age: wp.array(dtype=float), ux: wp.array3d(dtype=float),
            uy: wp.array3d(dtype=float), uz: wp.array3d(dtype=float), solid: wp.array3d(dtype=wp.uint8),
@@ -27,11 +53,9 @@ def k_adv3(pos: wp.array(dtype=wp.vec3), age: wp.array(dtype=float), ux: wp.arra
     if a < 0.0:
         return
     p = pos[i]
-    v1 = wp.vec3(trilin(ux, p[0], p[1], p[2], nx, ny, nz, 0, 0, 0), trilin(uy, p[0], p[1], p[2], nx, ny, nz, 0, 0, 0),
-                 trilin(uz, p[0], p[1], p[2], nx, ny, nz, 0, 0, 0))
+    v1 = vel_smooth(ux, uy, uz, p, nx, ny, nz)
     m = p + 0.5 * dt * v1
-    v2 = wp.vec3(trilin(ux, m[0], m[1], m[2], nx, ny, nz, 0, 0, 0), trilin(uy, m[0], m[1], m[2], nx, ny, nz, 0, 0, 0),
-                 trilin(uz, m[0], m[1], m[2], nx, ny, nz, 0, 0, 0))
+    v2 = vel_smooth(ux, uy, uz, m, nx, ny, nz)
     q = p + dt * v2
     st = wp.rand_init(seed, i)
     sig = wp.sqrt(2.0 * (d0 + d1 * a) * dt)

@@ -31,7 +31,7 @@ solid = np.load(ROOT / "cache" / "car" / "solid.npy")
 NZ, NY, NX = solid.shape
 U = 0.07
 
-sim = LBM3D(NX, NY, NZ, nu=1e-4, solid=solid, bounds=(INLET, OUTLET, SLIP, SLIP, SLIP, SLIP), csmag=0.16,
+sim = LBM3D(NX, NY, NZ, nu=1.5e-3, solid=solid, bounds=(INLET, OUTLET, SLIP, SLIP, SLIP, SLIP), csmag=0.16,
             u_init=(U, 0, 0), u_in=(U, 0, 0), sponge=(0, int(NX * 0.9), 0.04))
 
 
