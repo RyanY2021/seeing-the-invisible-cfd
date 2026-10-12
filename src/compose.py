@@ -126,6 +126,12 @@ def draw_captions(img, t):
         elif style == "app":
             lay = T(("app", text), text, 54, FONT_CAPTION_IT, color=(0.97, 0.97, 0.98))
             x0, y = 120, H - 132 + rise
+            # soft elliptical scrim so light backgrounds (sea, sky) keep the caption legible
+            if "_scrim" not in _cache:
+                yy, xx = np.mgrid[0:H, 0:W].astype(np.float32)
+                e = ((xx - 420) / 760.0) ** 2 + ((yy - (H - 150)) / 190.0) ** 2
+                _cache["_scrim"] = np.clip(1 - e, 0, 1) ** 1.6
+            img *= (1 - 0.55 * a * _cache["_scrim"])[..., None]
             shadowed(img, lay, x0, y, a, anchor="lm", shadow=0.6)
             if label:
                 lab = T(("lab", label), label, 20, FONT_LABEL, tracking=0.42, color=(1.0, 0.82, 0.55))

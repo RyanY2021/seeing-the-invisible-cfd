@@ -20,7 +20,7 @@ LAST = int(A[2]) if len(A) > 2 else FIRST
 PCT = int(A[3]) if len(A) > 3 else 100
 SAMPLES = int(A[4]) if len(A) > 4 else 64
 VDB_FORCE = int(A[5]) if len(A) > 5 else -1
-DENS = float(A[6]) if len(A) > 6 else 25.0
+DENS = float(A[6]) if len(A) > 6 else 40.0
 NFR = 200
 
 scn = sc.reset_scene()
@@ -114,14 +114,14 @@ nt.links.new(p.outputs[0], out.inputs["Surface"])
 floor.data.materials.append(m)
 
 wall_m, _, _ = sc.principled("Wall", base=(0.02, 0.021, 0.024), rough=0.8)
-for y in (-6.5, 6.5):
+for y in (-9.5, 9.5):
     bpy.ops.mesh.primitive_plane_add(size=1, location=(3, y, 2.5), rotation=(math.pi / 2, 0, 0))
     w = bpy.context.active_object
     w.scale = (40, 5, 1)
     w.data.materials.append(wall_m)
 bpy.ops.mesh.primitive_plane_add(size=1, location=(3, 0, 5.0))
 ceil = bpy.context.active_object
-ceil.scale = (40, 13, 1)
+ceil.scale = (40, 19, 1)
 ceil.data.materials.append(wall_m)
 # ceiling light strips along the flow
 strip = sc.emission_mat("Strip", (1.0, 0.97, 0.93), 6.0)
@@ -134,21 +134,15 @@ for y in (-2.4, -0.8, 0.8, 2.4):
 
 # smoke rake: struts + nozzles (dark anodised metal)
 rk_m, _, _ = sc.principled("Rake", base=(0.05, 0.05, 0.055), rough=0.35, metal=0.8)
-for yl, z0, z1 in ((0.0, 0.0, 1.82), (-0.62, 0.0, 1.20), (0.62, 0.0, 1.20)):
+for yl, z0, z1 in ((0.0, 0.0, 1.86),):
     bpy.ops.mesh.primitive_cylinder_add(vertices=16, radius=0.014, depth=z1 - z0, location=(-0.78, yl, (z0 + z1) / 2))
     bpy.context.active_object.data.materials.append(rk_m)
 import numpy as np  # noqa: E402
 
-for zu in np.arange(0.22, 1.75, 0.075):
+for zu in np.arange(0.24, 1.80, 0.12):
     bpy.ops.mesh.primitive_cylinder_add(vertices=8, radius=0.004, depth=0.23, location=(-0.665, 0.0, zu),
                                         rotation=(0, math.pi / 2, 0))
     bpy.context.active_object.data.materials.append(rk_m)
-for yl in (-0.62, 0.62):
-    for zu in np.arange(0.30, 1.20, 0.15):
-        bpy.ops.mesh.primitive_cylinder_add(vertices=8, radius=0.004, depth=0.23, location=(-0.665, yl, zu),
-                                            rotation=(0, math.pi / 2, 0))
-        bpy.context.active_object.data.materials.append(rk_m)
-
 # lights for the smoke (strong, from above/behind the plane of the rake)
 sc.add_light("SmokeKeyA", "SPOT", (1.0, 3.5, 4.2), 2600, color=(0.95, 0.97, 1.0), size=0.4, target=(2.0, 0, 0.9),
              spot_size=math.radians(55), blend=0.5)

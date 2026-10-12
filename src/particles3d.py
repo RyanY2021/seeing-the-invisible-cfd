@@ -113,3 +113,36 @@ class Particles3D:
                                                 float(origin[2]), float(r), gx, gy, gz, float(w0), float(fade_age)],
                   device=self.d)
         return grid
+
+
+@wp.kernel
+def k_blur_axis(src: wp.array3d(dtype=float), dst: wp.array3d(dtype=float), axis: int, w0: float, w1: float, w2: float):
+    """Separable 5-tap Gaussian along one axis (z=0, y=1, x=2 of the [z, y, x] array)."""
+    k, j, i = wp.tid()
+    nz = src.shape[0]
+    ny = src.shape[1]
+    nx = src.shape[2]
+    acc = w0 * src[k, j, i]
+    for o in range(1, 3):
+        wt = w1
+        if o == 2:
+            wt = w2
+        if axis == 0:
+            acc += wt * (src[wp.max(k - o, 0), j, i] + src[wp.min(k + o, nz - 1), j, i])
+        elif axis == 1:
+            acc += wt * (src[k, wp.max(j - o, 0), i] + src[k, wp.min(j + o, ny - 1), i])
+        else:
+            acc += wt * (src[k, j, wp.max(i - o, 0)] + src[k, j, wp.min(i + o, nx - 1)])
+    dst[k, j, i] = acc
+
+
+def blur3(grid, tmp, sigma=1.0):
+    import math
+
+    g = [math.exp(-(o * o) / (2 * sigma * sigma)) for o in range(3)]
+    s = g[0] + 2 * (g[1] + g[2])
+    w = [x / s for x in g]
+    for ax in range(3):
+        wp.launch(k_blur_axis, dim=grid.shape, inputs=[grid, tmp, ax, w[0], w[1], w[2]], device=grid.device)
+        grid, tmp = tmp, grid
+    return grid, tmp
