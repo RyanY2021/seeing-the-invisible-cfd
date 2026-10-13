@@ -8,7 +8,20 @@ The user will review the final cut. Ask the user when genuinely unsure (they wel
 Shot-by-shot plan, timings and caption text live in `docs/STORYBOARD.md`.
 Update `docs/PROGRESS.md` after every milestone (a session may be aborted at any time).
 
-## User decisions (fixed — do not re-ask)
+## v2 (made 2026-10-13; committed, not yet released) — user decisions, these override the v1 ones below where they conflict
+v1 (v1.0.0, realistic style, 2:35) is released. The user reviewed it and asked for **v2**:
+- Narrative less compressed: more logical steps / "mind guidance" so outsiders understand and are convinced.
+- Music had no transients → base the score on the user's **Tidepool** colorbass project (`D:\Creative\Colorbass Test`,
+  engine copied into `src/score/`), **softer, no heavy drops**, flowing; slower is OK (we use 120 BPM).
+- Art style: **neon / synthwave ("steamwave") / acrylic / prismatic / jumping**, richer pictures, more **3D**,
+  custom shaders with real light & shadow. Hide coarse Blender models "car-ad style" (black objects drawn by highlights).
+- **Clawd** (Claude Code's orange pixel critter) takes part — guiding, interacting with the elements. Fun, not overdesigned;
+  the science stays the point.
+- No time limit, but keep the length sensible (well under 7 min; we target ≈ 4:45).
+- The user is asleep/away during production: work autonomously, keep `docs/PROGRESS.md` current, report at the end.
+Plan: `docs/STORYBOARD_v2.md`. Output name: `output/Seeing_the_Invisible_CFD_v2.mp4` (next release v2.0.0).
+
+## User decisions for v1 (fixed — do not re-ask)
 - Art style: **realistic / cinematic** (photoreal renders, real-looking smoke & dye), but free to show skill.
 - **No voiceover.** On-screen text + music only → captions must carry the explanation: short, elegant, readable.
 - Audience: **general public** — intuition first; show Navier–Stokes but explain each term visually; mesh → cells → time-stepping explained simply; one beat on turbulence modelling.

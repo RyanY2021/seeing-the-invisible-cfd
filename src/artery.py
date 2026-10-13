@@ -8,7 +8,9 @@ import numpy as np
 from car_sdf import grid_eval, smin, write_ply
 from common import cache_dir
 
-NFR = 190
+import sys
+NFR = int(sys.argv[1]) if len(sys.argv) > 1 else 190
+OUTNAME = sys.argv[2] if len(sys.argv) > 2 else "artery"
 FPS = 24
 
 
@@ -78,7 +80,7 @@ def resample(path, n):
 def main():
     from skimage.measure import marching_cubes
 
-    out = cache_dir("artery")
+    out = cache_dir(OUTNAME)
     h = 0.06
     vol, (xs, ys, zs) = grid_eval(vessel_sdf, (-3.8, -1.8, -9.2), (4.2, 2.2, 9.2), h)
     v, f, n, _ = marching_cubes(vol, 0.0, spacing=(h, h, h))

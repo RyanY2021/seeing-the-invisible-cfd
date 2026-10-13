@@ -3,7 +3,7 @@
 The aircraft flies through a smoke curtain; behind it the trailing vortex sheet rolls up into two tip
 vortices that wind the smoke into spirals. 2D (Trefftz-plane) dynamics, time since passage = tau.
 Units: semi-span = 1 (= 6 m in the scene), bound circulation Gamma0 = 1 (time unit 0.84 s).
-  python sim_wing.py  -> cache/wing_tex/####.png  (16-bit density of the curtain cross-section)
+  python sim_wing.py [nframes t_pass outdir] -> cache/wing_tex/####.png  (v2: 336 4.0 wing_tex_v2)
 """
 from __future__ import annotations
 
@@ -19,8 +19,10 @@ wp = init_warp()
 N = 600
 DELTA = 0.06
 M = 3_000_000
-NFRAMES = 196
-T_PASS = 1.2  # s: when the wing reaches the curtain
+import sys
+NFRAMES = int(sys.argv[1]) if len(sys.argv) > 1 else 196
+T_PASS = float(sys.argv[2]) if len(sys.argv) > 2 else 1.2  # s: when the wing reaches the curtain
+OUTNAME = sys.argv[3] if len(sys.argv) > 3 else "wing_tex"
 T_UNIT = 1.4  # s per tau unit
 YR = (-2.6, 2.6)
 ZR = (-1.6, 1.0)
@@ -54,7 +56,7 @@ def k_rk4(p: wp.array(dtype=wp.vec2), k1: wp.array(dtype=wp.vec2), k2: wp.array(
 
 
 def main():
-    out = cache_dir("wing_tex")
+    out = cache_dir(OUTNAME)
     rng = np.random.default_rng(2)
     a = np.linspace(0, np.pi, N + 1)
     yn = -np.cos(a)

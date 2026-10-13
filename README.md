@@ -29,6 +29,20 @@ Shot-by-shot details (and which shots are genuine simulations vs. illustrations)
 
 The video file is not stored in git (it is attached to the release); the pipeline below rebuilds it from source.
 
+## Version 2 (with Clawd)
+v2 retells the film at a gentler pace (4:46) in a neon / synthwave / acrylic style, with **Clawd** — the
+little orange pixel critter of Claude Code — as a curious guide who asks the questions while the captions answer.
+New real simulations include the incense plume re-run with Clawd leaping through it as a moving solid body, a
+smoke-ring cannon, and a vortex street behind a Clawd-shaped obstacle (shown next to a NASA photo of the same pattern
+in clouds behind an island). The score builds on a companion procedural colorbass engine (softened, 120 BPM).
+Shot list and look: [docs/STORYBOARD_v2.md](docs/STORYBOARD_v2.md) · what is simulated vs illustrated:
+[docs/MAKING_OF_v2.md](docs/MAKING_OF_v2.md). The v2 video has not been released yet.
+
+Rebuild v2: render each `blender/shot_vXX.py -- render <first> <last> [spp]` (queues: `tools/gpu_queue_v2.sh`,
+`tools/gpu_queue_named.sh e`), run the Python shots `src/shot_v16.py` and `src/shot_v18.py`, then
+`src/score/score_v2.py`, `src/sfx_v2.py`, `src/make_srt_v2.py` and `src/compose_v2.py`
+(`tools/check_renders_v2.py` lists missing frames; `tools/finish_v2.sh` chains the last steps).
+
 ## Repository layout
 ```
 src/       solvers (lbm2d.py, lbm3d.py, particles3d.py), 2D shots, SDF models, music.py, timeline.py, compose.py
@@ -69,6 +83,9 @@ not redistributed here, so substitute your own in `src/common.py`.
   [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Credit "Seeing the Invisible — EdtRhyn".
 - **Third-party assets** keep their own terms (see the notes next to them):
   Poly Haven HDRIs ([CC0](https://polyhaven.com/license)); NASA Blue Marble / Black Marble imagery (public domain, credit NASA);
-  NOAA/NCEP GFS forecast data (public domain, U.S. Government work).
+  NOAA/NCEP GFS forecast data (public domain, U.S. Government work); v2 adds the NASA/GSFC Landsat 7 vortex-street
+  image (public domain) and the Nunito and Silkscreen fonts ([SIL OFL](https://openfontlicense.org), in `assets/fonts/`).
+- **Clawd**, the Claude Code mascot that appears in v2, is Anthropic's character. It is used here as fan art and is
+  **not** covered by the CC BY licence above.
 
 `CLAUDE.md` and `docs/PROGRESS.md` / `docs/QUESTIONS.md` are working notes from making the film with Claude Code.

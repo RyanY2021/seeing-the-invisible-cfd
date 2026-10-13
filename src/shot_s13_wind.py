@@ -16,7 +16,10 @@ from common import ASSETS, cache_dir, init_warp
 wp = init_warp()
 TW, TH = 4096, 2048
 NP = 260_000
-NFR = 190
+import sys
+NFR = int(sys.argv[1]) if len(sys.argv) > 1 else 190
+OUTNAME = sys.argv[2] if len(sys.argv) > 2 else "wind_tex"
+NEON = OUTNAME != "wind_tex"          # v2: neon palette
 WARM = 70
 DT_H = 1.0  # hours of particle motion per frame
 FADE = 0.90
@@ -92,7 +95,7 @@ def main():
     cyc[~band] = -1
     iy, ix = np.unravel_index(np.argmax(cyc), cyc.shape)
     print(f"strongest cyclone near lat {lats[iy]:.1f}, lon {lons[ix]:.1f}")
-    out = cache_dir("wind_tex")
+    out = cache_dir(OUTNAME)
     rng = np.random.default_rng(0)
     lon = wp.array(rng.uniform(0, 360, NP).astype(np.float32), dtype=float)
     lat = wp.array(np.degrees(np.arcsin(rng.uniform(-1, 1, NP))).astype(np.float32), dtype=float)
@@ -119,7 +122,10 @@ def main():
         inten = cv2.GaussianBlur(inten, (0, 0), 0.7)
         # colour by speed: calm = soft blue-white, strong = warm white/amber
         t = np.clip((spd - 9.0) / 16.0, 0, 1)[..., None] ** 1.3
-        col = (1 - t) * np.array([0.74, 0.86, 1.0]) + t * np.array([1.0, 0.80, 0.48])
+        if NEON:   # calm = cyan, strong = hot magenta-pink
+            col = (1 - t) * np.array([0.25, 0.85, 1.0]) + t * np.array([1.0, 0.28, 0.72])
+        else:
+            col = (1 - t) * np.array([0.74, 0.86, 1.0]) + t * np.array([1.0, 0.80, 0.48])
         alpha = np.clip(inten * 1.1, 0, 1)
         rgba = np.concatenate([col * alpha[..., None], alpha[..., None]], -1)
         cv2.imwrite(str(out / f"{f_:04d}.png"), (np.clip(rgba[..., [2, 1, 0, 3]], 0, 1) * 255).astype(np.uint8))
